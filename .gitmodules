@@ -1,0 +1,4 @@
+[submodule "DLibCNNTest/dependencies\\dlib"]
+	path = DLibCNNTest/dependencies\\dlib
+	url = git@github.com:davisking/dlib.git
+	branch = master
