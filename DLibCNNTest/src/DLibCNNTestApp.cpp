@@ -44,6 +44,9 @@ class DLibCNNTestApp : public App
 		dlibImageArrayGrayscale getDlibImageArrayForCiChannel( ci::Channel32fRef channel );
 
 		net_type mNet;
+		int mLastDigit;
+		ci::Font mFont;
+		std::vector<glm::vec2> mPoints;
 };
 
 void DLibCNNTestApp::setup()
@@ -73,11 +76,15 @@ void DLibCNNTestApp::setup()
 	deserialize( "../assets/mnist_network.dat" ) >> mNet;
 
 	ci::gl::color( ci::ColorAf( 1.0f, 1.0f, 1.0f, 1.0f ) );
+	mLastDigit = -1;
+	mFont = ci::Font( "Verdana", 20.0f );
+
+	gl::disableDepthRead();
 }
 
 void DLibCNNTestApp::mouseDrag( MouseEvent event )
 {
-	ci::gl::drawSolidCircle( event.getPos(), 5.0f );
+	mPoints.push_back( event.getPos() );
 }
 
 void DLibCNNTestApp::keyDown( KeyEvent event )
@@ -87,15 +94,15 @@ void DLibCNNTestApp::keyDown( KeyEvent event )
 		auto capture = copyWindowSurface();
 		ci::Surface8u resizedSurface = ci::ip::resizeCopy( capture, capture.getBounds(), glm::vec2( 28, 28 ) );
 		ci::Channel32fRef captureChannel = ci::Channel32f::create( resizedSurface );
+		//writeImage( "../assets/digit.png", resizedSurface );
 
 		auto dLibArray = getDlibImageArrayForCiChannel( captureChannel );
 		dlib::matrix<unsigned char> dLibMat = dlib::mat( dLibArray );
 
-		auto result = mNet( dLibMat );
-		ci::app::console() << result << std::endl;
+		mLastDigit = mNet( dLibMat );
+		mPoints.clear();
 	}
 	else if( event.getChar() == KeyEvent::KEY_c ) {
-		gl::clear( ColorAf( 0.0f, 0.0f, 0.0f, 1.0f ) );
 	}
 }
 
@@ -132,7 +139,13 @@ void DLibCNNTestApp::update()
 
 void DLibCNNTestApp::draw()
 {
-	//gl::clear( ColorAf( 1.0f, 1.0f, 1.0f, 0.0f ) );
+	gl::clear( ColorAf( 0.0f, 0.0f, 0.0f, 1.0f ) );
+
+	for( auto point : mPoints ) {
+		ci::gl::drawSolidCircle( point, 8.0f );
+	}
+
+	gl::drawString( std::to_string( mLastDigit ), glm::vec2( 20.0f, 20.0f ), ci::Color::white(), mFont );
 }
 
 CINDER_APP( DLibCNNTestApp, RendererGl )
